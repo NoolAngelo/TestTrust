@@ -1,0 +1,237 @@
+{
+  "manifest_version": 3,
+  "name": "Test Trust",
+  "version": "1.0",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "identity"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "icons": {
+    "48": "icon48.png",
+    "128": "icon128.png"
+  }
+}
+```
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body {
+      width: 320px;
+      padding: 16px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    }
+    .container {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .logo {
+      width: 24px;
+      height: 24px;
+    }
+    .title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #1a1a1a;
+      margin: 0;
+    }
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .input-label {
+      font-size: 14px;
+      color: #4a4a4a;
+    }
+    .input-field {
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    .input-field:focus {
+      border-color: #175ddc;
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(23, 93, 220, 0.2);
+    }
+    .submit-btn {
+      background-color: #175ddc;
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .submit-btn:hover {
+      background-color: #1452c0;
+    }
+    .error-message {
+      color: #dc3545;
+      font-size: 14px;
+      display: none;
+    }
+    .logged-in-view {
+      display: none;
+    }
+    .action-btn {
+      background-color: #28a745;
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      margin-top: 8px;
+    }
+    .logout-btn {
+      background-color: #dc3545;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Login View -->
+    <div id="loginView">
+      <div class="header">
+        <img src="icon48.png" alt="Logo" class="logo">
+        <h1 class="title">Test Trust</h1>
+      </div>
+      <form id="loginForm">
+        <div class="input-group">
+          <label class="input-label" for="email">Email</label>
+          <input type="email" id="email" class="input-field" required>
+        </div>
+        <div class="input-group">
+          <label class="input-label" for="password">Password</label>
+          <input type="password" id="password" class="input-field" required>
+        </div>
+        <p id="errorMessage" class="error-message">Invalid credentials</p>
+        <button type="submit" class="submit-btn">Log In</button>
+      </form>
+    </div>
+
+    <!-- Logged In View -->
+    <div id="loggedInView" class="logged-in-view">
+      <div class="header">
+        <img src="icon48.png" alt="Logo" class="logo">
+        <h1 class="title">Test Trust</h1>
+      </div>
+      <p>Logged in as: <span id="userEmail"></span></p>
+      <button id="startExam" class="action-btn">Start Secure Exam</button>
+      <button id="stopExam" class="action-btn" style="display: none;">End Exam</button>
+      <button id="logout" class="action-btn logout-btn">Log Out</button>
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
+
+
+document.addEventListener('DOMContentLoaded', function() {
+  const loginView = document.getElementById('loginView');
+  const loggedInView = document.getElementById('loggedInView');
+  const loginForm = document.getElementById('loginForm');
+  const errorMessage = document.getElementById('errorMessage');
+  const userEmail = document.getElementById('userEmail');
+  const startExam = document.getElementById('startExam');
+  const stopExam = document.getElementById('stopExam');
+  const logoutBtn = document.getElementById('logout');
+
+  
+  chrome.storage.local.get(['isLoggedIn', 'userEmail'], function(result) {
+    if (result.isLoggedIn) {
+      showLoggedInView(result.userEmail);
+    }
+  });
+
+  loginForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+
+
+    if (email && password) {
+      chrome.storage.local.set({
+        isLoggedIn: true,
+        userEmail: email
+      }, function() {
+        showLoggedInView(email);
+      });
+    } else {
+      errorMessage.style.display = 'block';
+    }
+  });
+
+  startExam.addEventListener('click', function() {
+    chrome.runtime.sendMessage({type: 'START_EXAM'});
+    startExam.style.display = 'none';
+    stopExam.style.display = 'block';
+  });
+
+  stopExam.addEventListener('click', function() {
+    chrome.runtime.sendMessage({type: 'STOP_EXAM'});
+    startExam.style.display = 'block';
+    stopExam.style.display = 'none';
+  });
+
+  logoutBtn.addEventListener('click', function() {
+    chrome.storage.local.clear(function() {
+      showLoginView();
+    });
+  });
+
+  function showLoggedInView(email) {
+    loginView.style.display = 'none';
+    loggedInView.style.display = 'block';
+    userEmail.textContent = email;
+  }
+
+  function showLoginView() {
+    loginView.style.display = 'block';
+    loggedInView.style.display = 'none';
+    loginForm.reset();
+  }
+});
+
+
+let examMode = false;
+
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.type === 'START_EXAM') {
+    examMode = true;
+
+    initializeExamMonitoring();
+  } else if (request.type === 'STOP_EXAM') {
+    examMode = false;
+
+    stopExamMonitoring();
+  }
+});
+
+function initializeExamMonitoring() {
+
+  console.log('Exam monitoring started');
+}
+
+function stopExamMonitoring() {
+
+  console.log('Exam monitoring stopped');
+}
