@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
+  const roleSelectionView = document.getElementById('roleSelectionView');
   const loginView = document.getElementById('loginView');
   const loggedInView = document.getElementById('loggedInView');
   const loginForm = document.getElementById('loginForm');
@@ -7,12 +8,21 @@ document.addEventListener('DOMContentLoaded', function() {
   const startExam = document.getElementById('startExam');
   const stopExam = document.getElementById('stopExam');
   const logoutBtn = document.getElementById('logout');
+  const studentBtn = document.getElementById('studentBtn');
+  const teacherBtn = document.getElementById('teacherBtn');
 
-  // Check if user is already logged in
   chrome.storage.local.get(['isLoggedIn', 'userEmail'], function(result) {
     if (result.isLoggedIn) {
       showLoggedInView(result.userEmail);
     }
+  });
+
+  studentBtn.addEventListener('click', function() {
+    showLoginView('student');
+  });
+
+  teacherBtn.addEventListener('click', function() {
+    showLoginView('teacher');
   });
 
   loginForm.addEventListener('submit', function(e) {
@@ -20,8 +30,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
 
-    // Here you would typically make an API call to your backend
-    // This is a mock authentication
     if (email && password) {
       chrome.storage.local.set({
         isLoggedIn: true,
@@ -48,18 +56,26 @@ document.addEventListener('DOMContentLoaded', function() {
 
   logoutBtn.addEventListener('click', function() {
     chrome.storage.local.clear(function() {
-      showLoginView();
+      showRoleSelectionView();
     });
   });
 
   function showLoggedInView(email) {
+    roleSelectionView.style.display = 'none';
     loginView.style.display = 'none';
     loggedInView.style.display = 'block';
     userEmail.textContent = email;
   }
 
-  function showLoginView() {
+  function showLoginView(role) {
+    roleSelectionView.style.display = 'none';
     loginView.style.display = 'block';
+    loginForm.dataset.role = role;
+  }
+
+  function showRoleSelectionView() {
+    roleSelectionView.style.display = 'block';
+    loginView.style.display = 'none';
     loggedInView.style.display = 'none';
     loginForm.reset();
   }
