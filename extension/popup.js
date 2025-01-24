@@ -14,6 +14,8 @@ document.addEventListener('DOMContentLoaded', function() {
   chrome.storage.local.get(['isLoggedIn', 'userEmail'], function(result) {
     if (result.isLoggedIn) {
       showLoggedInView(result.userEmail);
+    } else {
+      showRoleSelectionView();
     }
   });
 
@@ -30,16 +32,28 @@ document.addEventListener('DOMContentLoaded', function() {
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
 
-    if (email && password) {
-      chrome.storage.local.set({
-        isLoggedIn: true,
-        userEmail: email
-      }, function() {
-        showLoggedInView(email);
-      });
-    } else {
+    // Simple email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      errorMessage.textContent = "Please enter a valid email";
       errorMessage.style.display = 'block';
+      return;
     }
+
+    // Simple password validation (at least 6 characters)
+    if (password.length < 6) {
+      errorMessage.textContent = "Password must be at least 6 characters";
+      errorMessage.style.display = 'block';
+      return;
+    }
+
+    // Store user session
+    chrome.storage.local.set({
+      isLoggedIn: true,
+      userEmail: email
+    }, function() {
+      showLoggedInView(email);
+    });
   });
 
   startExam.addEventListener('click', function() {
@@ -78,5 +92,16 @@ document.addEventListener('DOMContentLoaded', function() {
     loginView.style.display = 'none';
     loggedInView.style.display = 'none';
     loginForm.reset();
+  }
+
+  // Add data encryption
+  function encryptSensitiveData(data) {
+    // Implement end-to-end encryption
+  }
+
+  // Add secure storage
+  function secureStore(key, value) {
+    const encrypted = encryptSensitiveData(value);
+    chrome.storage.local.set({[key]: encrypted});
   }
 });
