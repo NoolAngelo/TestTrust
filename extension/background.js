@@ -21,31 +21,37 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 function initializeExamMonitoring() {
-  // Add WebRTC screen capture detection
-  detectScreenCapture();
-  // Add virtual machine detection
-  detectVirtualEnvironment();
-  // Add network monitoring
-  monitorNetworkRequests();
-  // Add clipboard monitoring
-  monitorClipboard();
-  
-  // Monitor tab switching
-  chrome.tabs.onActivated.addListener(logTabSwitch);
-  
-  // Monitor keyboard events
-  document.addEventListener('keydown', logKeyboardEvent);
-  
-  // Monitor mouse events
-  document.addEventListener('mousedown', logMouseEvent);
-  
-  // Start screen monitoring
-  startScreenMonitoring();
+  try {
+    // Add WebRTC screen capture detection
+    detectScreenCapture();
+    // Add virtual machine detection
+    detectVirtualEnvironment();
+    // Add network monitoring
+    monitorNetworkRequests();
+    // Add clipboard monitoring
+    monitorClipboard();
+    
+    // Monitor tab switching
+    chrome.tabs.onActivated.addListener(logTabSwitch);
+    
+    // Monitor keyboard events
+    document.addEventListener('keydown', logKeyboardEvent);
+    
+    // Monitor mouse events
+    document.addEventListener('mousedown', logMouseEvent);
+    
+    // Start screen monitoring
+    startScreenMonitoring();
+  } catch (error) {
+    console.error("Error initializing exam monitoring:", error);
+  }
 }
 
 function detectScreenCapture() {
   navigator.mediaDevices.getDisplayMedia().then(stream => {
     // Handle screen sharing detection
+  }).catch(error => {
+    console.error("Error detecting screen capture:", error);
   });
 }
 
@@ -102,6 +108,35 @@ function logMouseEvent(event) {
     y: event.clientY,
     timestamp: new Date()
   });
+}
+
+function monitorNetworkRequests() {
+  try {
+    // Implement network request monitoring
+  } catch (error) {
+    console.error("Error monitoring network requests:", error);
+  }
+}
+
+function monitorClipboard() {
+  try {
+    // Implement clipboard monitoring
+  } catch (error) {
+    console.error("Error monitoring clipboard:", error);
+  }
+}
+
+function secureStore(key, value) {
+  try {
+    const encrypted = encryptSensitiveData(value);
+    chrome.storage.local.set({[key]: encrypted}, function() {
+      if (chrome.runtime.lastError) {
+        console.error("Error storing data:", chrome.runtime.lastError);
+      }
+    });
+  } catch (error) {
+    console.error("Encryption error:", error);
+  }
 }
 
 function generateReport(examId) {
